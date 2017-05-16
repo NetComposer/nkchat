@@ -119,7 +119,7 @@ get_member_conversations(Srv, Domain, MemberId) ->
                 << ?CHAT_CONVERSATION/binary, ".members.member_id">> => MemberId
             },
             Search2 = #{
-                sort => [#{created_time => #{order => desc}}],
+                sort => [#{"name.keyword" => #{order => asc}}],
                 fields => [created_time, description, name, path, subtype, <<?CHAT_CONVERSATION/binary, ".members.member_id">>],
                 filters => Filters,
                 size => 9999
