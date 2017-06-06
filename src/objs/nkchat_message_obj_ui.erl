@@ -55,7 +55,7 @@ table(Srv, Domain) ->
                         path => Path,
                         conversation => ConvId,
                         text => Text,
-                        has_file => HasFile,
+                        hasFile => HasFile,
                         createdBy => CreatedBy,
                         createdTime => CreatedTime
                     }
@@ -108,6 +108,34 @@ objects_table(Data) ->
                                     }, null, null, 300);
                                     }">>
                     },
+                    #{
+                        view => <<"button">>,
+                        type => <<"iconButton">>,
+                        icon => <<"pause">>,
+                        autowidth => true,
+                        label => <<"Pause">>,
+                        click => <<"function() {
+                                    var grid = $$(\"objectsData\");
+                                    grid.showProgress();
+                                    webix.delay(function() {
+                                        grid.hideProgress();
+                                    }, null, null, 300);
+                                    }">>
+                    },
+                    #{
+                        view => <<"button">>,
+                        type => <<"iconButton">>,
+                        icon => <<"plus">>,
+                        autowidth => true,
+                        label => <<"New">>,
+                        click => <<"function() {
+                                    var grid = $$(\"objectsData\");
+                                    grid.showProgress();
+                                    webix.delay(function() {
+                                        grid.hideProgress();
+                                    }, null, null, 300);
+                                    }">>
+                    },
                     #{},
                     #{
                         view => <<"layout">>,
@@ -147,7 +175,7 @@ objects_table(Data) ->
                             #{
                                 view => <<"pager">>,
                                 id => <<"pagerA">>,
-                                template => <<"{common.first()}{common.prev()}&nbsp; {common.pages()}&nbsp; {common.next()}{common.last()}">>,
+                                template => <<"{common.first()}{common.prev()}&nbsp; {common.pages()}&nbsp; {common.next()}{common.last()}&nbsp;Total:&nbsp;#count#">>,
                                 autosize => true,
                                 height => 35,
                                 group => 5
@@ -166,37 +194,44 @@ create_default_objects_table_data(Data) ->
         id => <<"objectsData">>,
         view => <<"datatable">>,
         select => true,
-        editable => false,
+        dragColumn => true,
+        editable => true,
         columns => [
             #{
                 id => <<"path">>,
-                header => [<<"Path">>, #{ content => <<"extendedFilter">> }],
-                fillspace => <<"1">>
+                header => [<<"Path">>, #{ content => <<"serverFilter">> }],
+                fillspace => <<"1">>,
+                sort => <<"server">>
             },
             #{
                 id => <<"conversation">>,
-                header => [<<"Conversation">>, #{ content => <<"extendedFilter">> }],
-                fillspace => <<"1">>
+                header => [<<"Conversation">>, #{ content => <<"serverFilter">> }],
+                fillspace => <<"1">>,
+                sort => <<"server">>
             },
             #{
                 id => <<"text">>,
-                header => [<<"Text">>, #{ content => <<"extendedFilter">> }],
-                fillspace => <<"1">>
+                header => [<<"Text">>, #{ content => <<"serverFilter">> }],
+                fillspace => <<"1">>,
+                sort => <<"server">>
             },
             #{
                 id => <<"hasFile">>,
-                header => [<<"Attachment">>, #{ content => <<"extendedFilter">> }],
-                fillspace => <<"1">>
+                header => [<<"Attachment">>, #{ content => <<"serverFilter">> }],
+                fillspace => <<"1">>,
+                sort => <<"server">>
             },
             #{
                 id => <<"createdBy">>,
-                header => [<<"Created By">>, #{ content => <<"extendedFilter">> }],
-                fillspace => <<"1">>
+                header => [<<"Created By">>, #{ content => <<"serverFilter">> }],
+                fillspace => <<"1">>,
+                sort => <<"server">>
             },
             #{
                 id => <<"createdTime">>,
-                header => [<<"Created Time">>, #{ content => <<"extendedFilter">> }],
+                header => [<<"Created Time">>, #{ content => <<"serverFilter">> }],
                 fillspace => <<"1">>,
+                sort => <<"server">>,
                 format => <<"function(value) {
                     //                                     'en-US', 'es-ES', etc.
                     return (new Date(value)).toLocaleString();
@@ -221,7 +256,7 @@ create_default_objects_table_data(Data) ->
         ],
         pager => <<"pagerA">>,
         export => true,
-        data => Data,
+%        data => Data,
         url => <<"wsProxy->">>,
         save => <<"wsProxy->">>,
         onClick => #{
@@ -264,7 +299,7 @@ create_default_objects_table_data(Data) ->
         }">>,
         on => #{
             <<"onBeforeLoad">> => <<"function() {
-                webix.ui.datafilter.customFilter = {
+                webix.ui.datafilter.customFilter2 = {
                     refresh: function(master, node, column) {
                         node.onchange = function() {};
                         node.onclick = function(e) {
@@ -279,7 +314,7 @@ create_default_objects_table_data(Data) ->
                                 \"</select>\";
                     }
                 };
-                webix.ui.datafilter.extendedFilter = webix.extend({
+                webix.ui.datafilter.extendedFilter2 = webix.extend({
                     refresh:function(master, node, column){
                         //event handlers
                         node.onclick = function(e) {
