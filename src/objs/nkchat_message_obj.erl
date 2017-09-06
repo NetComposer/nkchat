@@ -27,7 +27,7 @@
 -behavior(nkdomain_obj).
 -author('Carlos Gonzalez <carlosj.gf@gmail.com>').
 
--export([create/4, update/3]).
+-export([create/4, create_by/5, update/3]).
 -export([object_info/0, object_es_mapping/0, object_parse/3, object_create/2, object_event/2]).
 -export([object_admin_info/0]).
 -export([syntax_check_file/3]).
@@ -46,13 +46,25 @@ create(SrvId, DomainId, ConvId, Text) ->
         type => ?CHAT_MESSAGE,
         domain_id => DomainId,
         parent_id => ConvId,
-        created_by => <<"admin">>,
+        created_by => <<"operador_dkv">>,
         ?CHAT_MESSAGE => #{
             text => Text
         }
     },
     object_create(SrvId, Obj).
 
+create_by(SrvId, DomainId, UserId, ConvId, Text) ->
+    Obj = #{
+        type => ?CHAT_MESSAGE,
+        domain_id => DomainId,
+        parent_id => ConvId,
+        created_by => UserId,
+        ?CHAT_MESSAGE => #{
+            text => Text
+        }
+    },
+    object_create(SrvId, Obj).
+        
 
 update(SrvId, MsgId, Text) ->
     nkdomain:update(SrvId, MsgId, #{?CHAT_MESSAGE => #{text => Text}}).

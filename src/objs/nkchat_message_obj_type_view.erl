@@ -23,7 +23,7 @@
 -module(nkchat_message_obj_type_view).
 -author('Carlos Gonzalez <carlosj.gf@gmail.com>').
 
--export([view/1, subview/2, table_data/2]).
+-export([view/1, subview/2, table_data/2, element_updated/3]).
 
 -include("nkchat.hrl").
 -include_lib("nkadmin/include/nkadmin.hrl").
@@ -226,14 +226,11 @@ table_iter([Entry|Rest], Pos, Acc, #admin_session{srv_id=SrvId}=Session) ->
     MessageText = maps:get(<<"text">>, Message, <<>>),
     MessageFileId = maps:get(<<"file_id">>, Message, <<>>),
     CreatedBy = maps:get(<<"created_by">>, Entry, <<>>),
-    Enabled = case maps:get(<<"enabled">>, Entry, true) of
-        true -> <<"fa-times">>;
-        false -> <<"fa-check">>
-    end,
-    Css = case maps:get(<<"enabled">>, Entry, true) of
-        true -> <<"">>;
-        false -> <<"webix_cell_disabled">>
-    end,
+    Enabled = maps:get(<<"enabled">>, Entry, true),
+%    Css = case Enabled of
+%        true -> <<"">>;
+%        false -> <<"webix_cell_disabled">>
+%    end,
     Conv = case nkdomain_lib:find(SrvId, ParentId) of
         #obj_id_ext{path=ConvPath} ->
             nkdomain_admin_util:obj_url(ParentId, ConvPath);
@@ -269,7 +266,19 @@ table_iter([Entry|Rest], Pos, Acc, #admin_session{srv_id=SrvId}=Session) ->
         created_by => User,
         text => MessageText,
         file_id => File,
-        enabled_icon => Enabled,
-        <<"$css">> => Css
+        enabled => Enabled
+%        <<"$css">> => Css
     },
     table_iter(Rest, Pos+1, [Data|Acc], Session).
+
+%% @private
+element_updated(_ObjId, Value, _Session) ->
+    #{
+        <<"text">> := Text
+    } = Value,
+    Update = #{
+        ?CHAT_MESSAGE => #{
+            text => Text
+        }
+    },
+    {ok, Update}.
