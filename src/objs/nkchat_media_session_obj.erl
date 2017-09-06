@@ -493,7 +493,7 @@ object_handle_info(_Msg, _State) ->
 %% @private
 do_invite(CalleeId, InviteOpts, State) ->
     #?STATE{srv_id=SrvId, domain_id=DomainId, parent_id=CallerId, id=#obj_id_ext{obj_id=SessId}} = State,
-    Op1= #{
+    Op1 = #{
         ?MEDIA_SESSION => #{
             <<"invite_op">> => #{
                 <<"caller_id">> => CallerId,
@@ -503,24 +503,48 @@ do_invite(CalleeId, InviteOpts, State) ->
             }
         }
     },
-    case nkdomain_user_obj:add_notification_op(SrvId, CalleeId, ?MEDIA_SESSION, #{}, Op1) of
-        {ok, _MemberId, Op2} ->
-            TTL = case InviteOpts of
-                #{ttl:=TTL0} when is_integer(TTL0), TTL0 > 0 ->
-                    TTL0;
-                _ ->
-                    ?DEFAULT_INVITE_TTL
-            end,
-            Opts = #{ttl => TTL},
-            case
-                nkdomain_token_obj:create(SrvId, DomainId, CalleeId, CalleeId, <<"media.call">>, Opts, Op2)
-            of
-                {ok, InviteId, Pid, _Secs, _Unknown} ->
-                    State2 = add_invite(InviteId, Pid, CalleeId, InviteOpts, State),
-                    {ok, InviteId, State2};
+    case do_invite_push(InviteOpts, State) of
+        {ok, Opts} ->
+            case nkdomain_user_obj:add_notification_op(SrvId, CalleeId, ?MEDIA_SESSION, Opts, Op1) of
+                {ok, _MemberId, Op2} ->
+                    TTL = case InviteOpts of
+                        #{ttl:=TTL0} when is_integer(TTL0), TTL0 > 0 ->
+                            TTL0;
+                        _ ->
+                            ?DEFAULT_INVITE_TTL
+                    end,
+                    Opts = #{ttl => TTL},
+                    case
+                        nkdomain_token_obj:create(SrvId, DomainId, CalleeId, CalleeId, <<"media.call">>, Opts, Op2)
+                    of
+                        {ok, InviteId, Pid, _Secs, _Unknown} ->
+                            State2 = add_invite(InviteId, Pid, CalleeId, InviteOpts, State),
+                            {ok, InviteId, State2};
+                        {error, Error} ->
+                            {error, Error}
+                    end;
                 {error, Error} ->
                     {error, Error}
             end;
+        {error, Error} ->
+            {error, Error}
+    end.
+
+
+%% @private
+do_invite_push(InviteOpts, #?STATE{parent_id=CallerId, srv_id=SrvId}) ->
+    case nkdomain_user_obj:get_name(SrvId, CallerId) of
+        {ok, #{fullname:=FullName}} ->
+            Data = #{
+                wakeup_push => #{
+                    type => ?MEDIA_SESSION,
+                    class => invite,
+                    full_name => FullName,
+                    audio => maps:get(audio, InviteOpts),
+                    video => maps:get(video, InviteOpts)
+                }
+            },
+            {ok, Data};
         {error, Error} ->
             {error, Error}
     end.
