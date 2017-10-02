@@ -546,7 +546,7 @@ do_rm_conv(ConvId, State) ->
             #?STATE{session=Session} = State,
             #session{user_id=UserId, conv_pids=ConvPids1, active_id=ActiveId} = Session,
             nkchat_conversation_obj:remove_session(Pid, UserId, SessId),
-            ConvPids2 = maps:remove(Pid, ConvPids1),
+            ConvPids2 = maps:remove(ConvId, ConvPids1),
             Session2 = Session#session{conv_pids=ConvPids2},
             Session3 = case ActiveId of
                 ConvId ->
