@@ -87,7 +87,8 @@
     {media_started, MediaId::nkdomain:obj_id(), CallId::nkdomain:obj_id()} |
     {media_stopped, MediaId::nkdomain:obj_id(), CallId::nkdomain:obj_id(), Reason::term()} |
     {new_candidate, CallId::nkdomain:obj_id(), nkchat_media_call_obj:candidate()} |
-    {session_status, SessId::nkdomain:obj_id(), CallId::nkdomain:obj_id(), nkchat_media_call_obj:session_status()} |
+    {session_status, SessId::nkdomain:obj_id(), UserId::nkdomain:obj_id(),
+                     CallId::nkdomain:obj_id(), nkchat_media_call_obj:session_status()} |
     {call_status, CallId::nkdomain:obj_id(), nkchat_media_call_obj:call_status()} |
     {session_added, SessId::nkdomain:obj_id(), User::nkdomain:obj_id(), CallId::nkdomain:obj_id(), #{}} |
     {session_removed, SessId::nkdomain:obj_id(), User::nkdomain:obj_id(), CallId::nkdomain:obj_id(), #{}} |
@@ -632,8 +633,8 @@ do_call_event({session_added, SessId, MemberId, Data}, CallId, State) ->
 do_call_event({session_removed, SessId, MemberId, Data}, CallId, State) ->
     do_event({session_removed, SessId, MemberId, CallId, Data}, State);
 
-do_call_event({session_status, SessId, Status}, CallId, State) ->
-    do_event({session_status, SessId, CallId, Status}, State);
+do_call_event({session_status, SessId, UserId, Status}, CallId, State) ->
+    do_event({session_status, SessId, UserId, CallId, Status}, State);
 
 do_call_event({call_hangup, Reason, Time}, CallId, #obj_state{session=Session}=State) ->
     #session{medias=Medias} = Session,

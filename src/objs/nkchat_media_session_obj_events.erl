@@ -58,8 +58,8 @@ event({media_stopped, MediaId, CallId, Reason}, State) ->
 event({new_candidate, CallId, #sdp_candidate{mid=MId, index=Index, candidate=Candidate}}, State) ->
     {event, {new_candidate, #{call_id=>CallId, sdp_mid=>MId, sdp_line_index=>Index, candidate=>Candidate}}, State};
 
-event({session_status, SessId, CallId, Status}, State) ->
-    {event, {session_status, #{call_id=>CallId, session_id=>SessId, status=>Status}}, State};
+event({session_status, SessId, UserId, CallId, Status}, State) ->
+    {event, {session_status, #{call_id=>CallId, session_id=>SessId, user_id=>UserId, status=>Status}}, State};
 
 event({session_started, SessId, CallId}, State) ->
     {event, {session_started, #{call_id=>CallId, session_id=>SessId}}, State};

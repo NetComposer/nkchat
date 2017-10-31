@@ -48,8 +48,8 @@ event({session_added, SessId, MemberId, _Data}, State) ->
 event({session_removed, SessId, MemberId, _Data}, State) ->
     {event, {session_removed, #{member_id=>MemberId, session_id=>SessId}}, State};
 
-event({session_status, SessId, Status}, State) ->
-    {event, {session_status, #{session_id=>SessId, status=>Status}}, State};
+event({session_status, SessId, UserId, Status}, State) ->
+    {event, {session_status, #{session_id=>SessId, user_id=>UserId, status=>Status}}, State};
 
 event({call_hangup, Reason, Time},State) ->
     {event, {call_hangup, #{reason=>Reason, duration=>Time}}, State};

@@ -123,7 +123,7 @@
     {call_status, call_status()} |
     {session_added, SessId::nkdomain:obj_id(), User::nkdomain:obj_id(), #{}} |
     {session_removed, SessId::nkdomain:obj_id(), User::nkdomain:obj_id(), #{}} |
-    {session_status, SessId::nkdomain:obj_id(), session_status()} |
+    {session_status, SessId::nkdomain:obj_id(), UserId::nkdomain:obj_id(), session_status()} |
     {call_hangup, Reason::nkservice:error(), Time::integer()}.
 
 
@@ -574,19 +574,24 @@ object_sync_op({?MODULE, send_candidate, SessId, Candidate}, _From, State) ->
     end;
 
 object_sync_op({?MODULE, set_status, SessId, Status}, _From, State) ->
-    case get_media_session_session(SessId, State) of
-         {caller, #media_session{caller_status=OldStatus}=Media} ->
-            NewStatus = maps:merge(OldStatus, Status),
-            Media2 = Media#media_session{caller_status=NewStatus},
-             State2 = update_media_session(Media2, State),
-            do_all_member_sessions_event({session_status, SessId, Status}, State),
-            {reply, ok, State2};
-        {callee, #media_session{callee_status=OldStatus}=Media} ->
-            NewStatus = maps:merge(OldStatus, Status),
-            Media2 = Media#media_session{callee_status=NewStatus},
-            State2 = update_media_session(Media2, State),
-            do_all_member_sessions_event({session_status, SessId, Status}, State),
-            {reply, ok, State2};
+    case get_member_session(SessId, State) of
+        #member_session{user_id=UserId} ->
+            case get_media_session_session(SessId, State) of
+                 {caller, #media_session{caller_status=OldStatus}=Media} ->
+                    NewStatus = maps:merge(OldStatus, Status),
+                    Media2 = Media#media_session{caller_status=NewStatus},
+                     State2 = update_media_session(Media2, State),
+                    do_all_member_sessions_event({session_status, SessId, UserId, Status}, State),
+                    {reply, ok, State2};
+                {callee, #media_session{callee_status=OldStatus}=Media} ->
+                    NewStatus = maps:merge(OldStatus, Status),
+                    Media2 = Media#media_session{callee_status=NewStatus},
+                    State2 = update_media_session(Media2, State),
+                    do_all_member_sessions_event({session_status, SessId, UserId, Status}, State),
+                    {reply, ok, State2};
+                not_found ->
+                    {reply, {error, session_not_found}, State}
+            end;
         not_found ->
             {reply, {error, session_not_found}, State}
     end;
