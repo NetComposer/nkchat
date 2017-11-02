@@ -43,12 +43,17 @@
 
 -type message_type() :: binary().
 
+-type layout() :: binary().
+
 -type create_opts() ::
     #{
         text => binary(),                       % Mandatory
         created_by => nkdomain:obj_id(),
         type => message_type(),
+        layout => layout(),
         body => map(),
+        file_id => nkdomain:obj_id(),
+        meta => map(),
         member_roles => [nkchat_conversation_obj:member_role()]
     }.
 
@@ -56,7 +61,9 @@
     #{
         text => binary(),
         type => message_type(),
-        body => map()
+        layout => layout(),
+        body => map(),
+        meta => map()
     }.
 
 
@@ -70,7 +77,7 @@
 create(Conv, Opts) ->
     case nkchat_conversation_obj:get_status(Conv) of
         {ConvId, DomainId, _Status, false} ->
-            Msg = maps:with([text, type, body, member_roles], Opts),
+            Msg = maps:with([text, type, layout, body, file_id, meta, member_roles], Opts),
             Obj = #{
                 type => ?CHAT_MESSAGE,
                 domain_id => DomainId,
@@ -78,6 +85,7 @@ create(Conv, Opts) ->
                 created_by => maps:get(created_by, Opts, <<"admin">>),
                 ?CHAT_MESSAGE => Msg
             },
+            lager:error("NKLOG OBJ ~p", [Obj]),
             case nkdomain_obj_make:create(Obj#{domain_id=>DomainId}) of
                 {ok, #obj_id_ext{obj_id=MsgId, pid=MsgPid}, _Unknown} ->
                     {ok, MsgId, MsgPid};
@@ -133,9 +141,11 @@ object_admin_info() ->
 object_es_mapping() ->
     #{
         type => #{type => keyword},
+        layout => #{type => keyword},
         text => #{type => text},
         file_id => #{type => keyword},
         body => #{enabled => false},
+        meta => #{enabled => false},
         member_roles => #{type => keyword}
     }.
 
@@ -145,8 +155,10 @@ object_es_mapping() ->
 object_parse(update, _Obj) ->
     #{
         text => binary,
+        layout => #{type => keyword},
         file_id => fun ?MODULE:syntax_check_file/3,
-        body => map
+        body => map,
+        meta => map
     };
 
 object_parse(_Mode, Obj) ->
@@ -162,6 +174,7 @@ object_parse(_Mode, Obj) ->
 
 %% @doc
 object_create(#{parent_id:=ConvId}=Obj) ->
+    lager:error("NKLOG CREATE ~p", [Obj]),
     case nkdomain:get_domain_id(ConvId) of
         {ok, DomainId} ->
             nkdomain_obj_make:create(Obj#{domain_id=>DomainId});
