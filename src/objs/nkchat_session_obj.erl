@@ -57,6 +57,7 @@
     {conversation_activated, ConvId::nkdomain:obj_id()} |
     {conversation_added, ConvId::nkdomain:obj_id()} |
     {conversation_removed, ConvId::nkdomain:obj_id()} |
+    {conversation_updated, nkdomain:obj()} |
     {member_added, ConvId::nkdomain:obj_id(), IsActive::boolean(), MemberId::nkdomain:obj_id()} |
     {member_removed, ConvId::nkdomain:obj_id(), IsActive::boolean(), MemberId::nkdomain:obj_id()} |
     {message_created, nkdomain:obj()} |
@@ -591,6 +592,9 @@ do_conversation_event({status_updated, Status}, ConvId, State) ->
 do_conversation_event({is_closed_updated, IsClosed}, ConvId, State) ->
     {noreply, do_event({is_closed_updated, ConvId, IsClosed}, State)};
 
+do_conversation_event({conversation_updated, Conv}, ConvId, State) ->
+    {noreply, do_event({conversation_updated, ConvId, Conv}, State)};
+        
 do_conversation_event({counter_updated, Counter}, ConvId, State) ->
     {noreply, do_event({unread_counter_updated, ConvId, Counter}, State)};
 

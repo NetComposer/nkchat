@@ -966,6 +966,20 @@ object_event({status_updated, Status}, State) ->
 object_event({is_closed_updated, IsClosed}, State) ->
     {ok, do_event_all_sessions({is_closed_updated, IsClosed}, State)};
 
+object_event({updated, _Update}, #obj_state{obj=#{?CHAT_CONVERSATION:=ChatConv}=Obj, session=Session} = State) ->
+    #session{status=Status, is_closed=IsClosed} = Session,
+    #{type:=Type, members:=Members} = ChatConv,
+    Data = #{
+        name => maps:get(name, Obj, <<>>),
+        description => maps:get(description, Obj, <<>>),
+        type => Type,
+        is_closed => IsClosed,
+        status => Status,
+        members => Members,
+        info => maps:get(info, ChatConv, [])
+    },
+    {ok, do_event_all_sessions({conversation_updated, Data}, State)};
+
 object_event(_Event, State) ->
     {ok, State}.
 
