@@ -34,6 +34,7 @@
     <<"unloaded">>,
     <<"conversation_added">>,
     <<"conversation_removed">>,
+    <<"conversation_updated">>,
     <<"member_added">>,
     <<"member_removed">>,
     <<"message_created">>,
