@@ -34,8 +34,8 @@
 %% ===================================================================
 
 cmd(<<"add_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}=Data}) ->
-    Silent = maps:get(silent, Data, false),
-    case nkchat_conversation_obj:add_member(ConvId, MemberId, Silent) of
+    Opts = maps:with([silent], Data),
+    case nkchat_conversation_obj:add_member(ConvId, MemberId, Opts) of
         {ok, MemberObjId} ->
             {ok, #{<<"member_id">>=>MemberObjId}};
         {error, Error} ->
@@ -43,8 +43,8 @@ cmd(<<"add_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}=Data}) ->
     end;
 
 cmd(<<"remove_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}=Data}) ->
-    Silent = maps:get(silent, Data, false),
-    case nkchat_conversation_obj:remove_member(ConvId, MemberId, Silent) of
+    Opts = maps:with([silent], Data),
+    case nkchat_conversation_obj:remove_member(ConvId, MemberId, Opts) of
         ok ->
             {ok, #{}};
         {error, Error} ->
