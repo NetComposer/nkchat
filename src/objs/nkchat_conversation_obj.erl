@@ -31,7 +31,7 @@
 -author('Carlos Gonzalez <carlosj.gf@gmail.com>').
 
 -export([create/2]).
--export([add_info/2, add_member/2, remove_member/2]).
+-export([add_info/2, add_member/3, remove_member/3]).
 -export([add_session/4, set_session_active/4, remove_session/3, get_member_info/2]).
 -export([get_status/1, set_status/2, set_closed/2]).
 -export([get_info/1, get_messages/2, find_member_conversations/2,
@@ -126,28 +126,32 @@ add_info(Id, Info) when is_map(Info) ->
 
 
 %% @doc Members will be changed for roles
-
--spec add_member(nkdomain:id(), nkdomain:id()) ->
+-spec add_member(nkdomain:id(), nkdomain:id(), boolean()) ->
     {ok, nkdomain:obj_id()} | {error, term()}.
 
-add_member(Id, Member) ->
+add_member(Id, Member, Silent) ->
     case nkdomain_lib:find(Member) of
         #obj_id_ext{type= ?DOMAIN_USER, obj_id=MemberId} ->
             case nkdomain_obj:sync_op(Id, {?MODULE, add_member, MemberId}) of
                 {ok, ObjId} ->
-                    Msg = #{
-                        type => ?CHAT_MSG_TYPE_ADDED_MEMBER,
-                        text => <<"member added">>,
-                        created_by => <<"admin">>,
-                        body => #{
-                            member_id => MemberId
-                        }
-                    },
-                    case nkchat_message_obj:create(Id, Msg) of
-                        {ok, _MsgId, _Pid} ->
-                            ok;
-                        {error, Error2} ->
-                            lager:warning("could not add member_added msg to conversation ~s: ~p", [Id, Error2])
+                    case Silent of
+                        false ->
+                            Msg = #{
+                                type => ?CHAT_MSG_TYPE_ADDED_MEMBER,
+                                text => <<"member added">>,
+                                created_by => <<"admin">>,
+                                body => #{
+                                    member_id => MemberId
+                                }
+                            },
+                            case nkchat_message_obj:create(Id, Msg) of
+                                {ok, _MsgId, _Pid} ->
+                                    ok;
+                                {error, Error2} ->
+                                    lager:warning("could not add member_added msg to conversation ~s: ~p", [Id, Error2])
+                            end;
+                        true ->
+                            ok
                     end,
                     {ok, ObjId};
                 {error, Error} ->
@@ -163,10 +167,10 @@ add_member(Id, Member) ->
 
 
 %% @doc
--spec remove_member(nkdomain:id(), nkdomain:id()) ->
+-spec remove_member(nkdomain:id(), nkdomain:id(), boolean()) ->
     ok | {error, term()}.
 
-remove_member(Id, Member) ->
+remove_member(Id, Member, Silent) ->
     MemberId = case nkdomain_lib:find(Member) of
         #obj_id_ext{obj_id=ObjId} ->
             ObjId;
@@ -175,20 +179,25 @@ remove_member(Id, Member) ->
     end,
     case nkdomain_obj:sync_op(Id, {?MODULE, remove_member, MemberId}) of
         ok ->
-            Msg = #{
-                type => ?CHAT_MSG_TYPE_REMOVED_MEMBER,
-                text => <<"member removed">>,
-                created_by => <<"admin">>,
-                body => #{
-                    member_id => MemberId
-                }
-            },
-            case nkchat_message_obj:create(Id, Msg) of
-                {ok, _MsgId, _Pid} ->
-                    ok;
-                {error, Error2} ->
-                    lager:warning("could not add member_removed msg to conversation ~s: ~p", [Id, Error2])
-            end;
+            case Silent of
+                false ->
+                    Msg = #{
+                        type => ?CHAT_MSG_TYPE_REMOVED_MEMBER,
+                        text => <<"member removed">>,
+                        created_by => <<"admin">>,
+                        body => #{
+                            member_id => MemberId
+                        }
+                    },
+                    case nkchat_message_obj:create(Id, Msg) of
+                        {ok, _MsgId, _Pid} ->
+                            ok;
+                        {error, Error2} ->
+                            lager:warning("could not add member_removed msg to conversation ~s: ~p", [Id, Error2])
+                    end;
+                true ->
+                    ok
+                end;
         {error, Error} ->
             {error, Error}
     end.
@@ -422,7 +431,7 @@ perform_op(#{?CHAT_CONVERSATION:=#{<<"add_member_op">>:=Op}}) ->
         <<"member_id">> := MemberId,
         <<"user_id">> := _UserId
     } = Op,
-    case add_member(ConvId, MemberId) of
+    case add_member(ConvId, MemberId, false) of
         {ok, _MemberId} ->
             ok;
         {error, Error} ->
