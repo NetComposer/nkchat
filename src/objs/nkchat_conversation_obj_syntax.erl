@@ -37,6 +37,7 @@ syntax(<<"add_member">>, Syntax) ->
     Syntax#{
         id => binary,
         member_id => binary,
+        silent => boolean,
         '__mandatory' => [id, member_id]
     };
 
@@ -44,6 +45,7 @@ syntax(<<"remove_member">>, Syntax) ->
     Syntax#{
         id => binary,
         member_id => binary,
+        silent => boolean,
         '__mandatory' => [id, member_id]
     };
 

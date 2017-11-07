@@ -33,16 +33,18 @@
 %% API
 %% ===================================================================
 
-cmd(<<"add_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}}) ->
-    case nkchat_conversation_obj:add_member(ConvId, MemberId) of
+cmd(<<"add_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}=Data}) ->
+    Silent = maps:get(silent, Data, false),
+    case nkchat_conversation_obj:add_member(ConvId, MemberId, Silent) of
         {ok, MemberObjId} ->
             {ok, #{<<"member_id">>=>MemberObjId}};
         {error, Error} ->
             {error, Error}
     end;
 
-cmd(<<"remove_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}}) ->
-    case nkchat_conversation_obj:remove_member(ConvId, MemberId) of
+cmd(<<"remove_member">>, #nkreq{data=#{id:=ConvId, member_id:=MemberId}=Data}) ->
+    Silent = maps:get(silent, Data, false),
+    case nkchat_conversation_obj:remove_member(ConvId, MemberId, Silent) of
         ok ->
             {ok, #{}};
         {error, Error} ->
