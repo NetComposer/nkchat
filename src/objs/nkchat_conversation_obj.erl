@@ -126,14 +126,15 @@ add_info(Id, Info) when is_map(Info) ->
 
 
 %% @doc Members will be changed for roles
--spec add_member(nkdomain:id(), nkdomain:id(), boolean()) ->
+-spec add_member(nkdomain:id(), nkdomain:id(), map()) ->
     {ok, nkdomain:obj_id()} | {error, term()}.
 
-add_member(Id, Member, Silent) ->
+add_member(Id, Member, Opts) ->
     case nkdomain_lib:find(Member) of
         #obj_id_ext{type= ?DOMAIN_USER, obj_id=MemberId} ->
             case nkdomain_obj:sync_op(Id, {?MODULE, add_member, MemberId}) of
                 {ok, ObjId} ->
+                    Silent = maps:get(silent, Opts, false),
                     case Silent of
                         false ->
                             Msg = #{
@@ -167,10 +168,10 @@ add_member(Id, Member, Silent) ->
 
 
 %% @doc
--spec remove_member(nkdomain:id(), nkdomain:id(), boolean()) ->
+-spec remove_member(nkdomain:id(), nkdomain:id(), map()) ->
     ok | {error, term()}.
 
-remove_member(Id, Member, Silent) ->
+remove_member(Id, Member, Opts) ->
     MemberId = case nkdomain_lib:find(Member) of
         #obj_id_ext{obj_id=ObjId} ->
             ObjId;
@@ -179,6 +180,7 @@ remove_member(Id, Member, Silent) ->
     end,
     case nkdomain_obj:sync_op(Id, {?MODULE, remove_member, MemberId}) of
         ok ->
+            Silent = maps:get(silent, Opts, false),
             case Silent of
                 false ->
                     Msg = #{
@@ -431,7 +433,7 @@ perform_op(#{?CHAT_CONVERSATION:=#{<<"add_member_op">>:=Op}}) ->
         <<"member_id">> := MemberId,
         <<"user_id">> := _UserId
     } = Op,
-    case add_member(ConvId, MemberId, false) of
+    case add_member(ConvId, MemberId, #{silent => false}) of
         {ok, _MemberId} ->
             ok;
         {error, Error} ->
