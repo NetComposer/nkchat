@@ -482,7 +482,13 @@ object_event({message_created, Msg}, #obj_state{session=Session}=State) ->
     ?DEBUG("created message ~p", [Msg], State),
     #session{total_messages=Total, messages=Msgs} = Session,
     #{obj_id:=MsgId, created_time:=Time} = Msg,
-    Msgs2 = [{Time, MsgId, Msg}|Msgs],
+    NewMsg = case nkdomain_db:find(MsgId) of
+        #obj_id_ext{type=MsgType, path=MsgPath} ->
+            Msg#{type => MsgType, path => MsgPath};
+        {error, _} ->
+            Msg#{type => ?CHAT_MESSAGE}
+    end,
+    Msgs2 = [{Time, MsgId, NewMsg}|Msgs],
     Msgs3 = case length(Msgs2) >= ?MSG_CACHE_SIZE of
         true -> lists:sublist(Msgs2, ?MSG_CACHE_SIZE);
         false -> Msgs2
@@ -501,7 +507,13 @@ object_event({message_updated, Msg}, #obj_state{session=Session}=State) ->
     #{obj_id:=MsgId, created_time:=Time} = Msg,
     Session2 = case lists:keymember(MsgId, 2, Msgs) of
         true ->
-            Msgs2 = lists:keystore(MsgId, 2, Msgs, {Time, MsgId, Msg}),
+            UpdMsg = case nkdomain_db:find(MsgId) of
+                #obj_id_ext{type=MsgType, path=MsgPath} ->
+                    Msg#{type => MsgType, path => MsgPath};
+                {error, _} ->
+                    Msg#{type => ?CHAT_MESSAGE}
+            end,
+            Msgs2 = lists:keystore(MsgId, 2, Msgs, {Time, MsgId, UpdMsg}),
             Session#session{messages=Msgs2};
         false ->
             Session
